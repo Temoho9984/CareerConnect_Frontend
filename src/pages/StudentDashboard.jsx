@@ -32,7 +32,7 @@ const StudentDashboard = () => {
   const fetchCourses = async () => {
     try {
       setCoursesLoading(true);
-      const response = await axios.get('http://localhost:5000/api/courses');
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/courses');
       setCourses(response.data);
       console.log('✅ Loaded courses:', response.data.length);
     } catch (error) {
@@ -68,7 +68,7 @@ const StudentDashboard = () => {
     
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/students/applications', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/students/applications', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCourseApplications(response.data);
@@ -96,7 +96,7 @@ const StudentDashboard = () => {
     
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.post('http://localhost:5000/api/students/applications', 
+      const response = await axios.post('https://career-connect-backend-chi.vercel.app/api/students/applications', 
         { 
           courseId: courseId, 
           institutionId: institutionId 

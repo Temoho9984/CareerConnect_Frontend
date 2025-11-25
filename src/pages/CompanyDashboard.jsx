@@ -31,7 +31,7 @@ const CompanyDashboard = () => {
     setLoading(true);
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/companies/jobs', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/companies/jobs', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setJobs(response.data);
@@ -73,7 +73,7 @@ const CompanyDashboard = () => {
     setLoading(true);
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get(`http://localhost:5000/api/companies/jobs/${jobId}/applicants`, {
+      const response = await axios.get(`https://career-connect-backend-chi.vercel.app/api/companies/jobs/${jobId}/applicants`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setApplicants(response.data);
@@ -127,7 +127,7 @@ const CompanyDashboard = () => {
         qualifications: jobForm.qualifications.split(',').map(qual => qual.trim())
       };
 
-      const response = await axios.post('http://localhost:5000/api/companies/jobs', jobData, {
+      const response = await axios.post('https://career-connect-backend-chi.vercel.app/api/companies/jobs', jobData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -165,7 +165,7 @@ const CompanyDashboard = () => {
     
     try {
       const token = await currentUser.getIdToken();
-      await axios.put(`http://localhost:5000/api/companies/jobs/${jobId}/close`, {}, {
+      await axios.put(`https://career-connect-backend-chi.vercel.app/api/companies/jobs/${jobId}/close`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

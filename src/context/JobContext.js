@@ -24,7 +24,7 @@ export const JobProvider = ({ children }) => {
     try {
       setLoading(true);
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/jobs', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/jobs', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setJobs(response.data);
@@ -42,7 +42,7 @@ export const JobProvider = ({ children }) => {
     try {
       setLoading(true);
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/job-applications/my-applications', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/job-applications/my-applications', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setApplications(response.data);
@@ -60,7 +60,7 @@ export const JobProvider = ({ children }) => {
     try {
       setLoading(true);
       const token = await currentUser.getIdToken();
-      const response = await axios.post('http://localhost:5000/api/job-applications/apply', 
+      const response = await axios.post('https://career-connect-backend-chi.vercel.app/api/job-applications/apply', 
         {
           jobId,
           coverLetter
@@ -88,7 +88,7 @@ export const JobProvider = ({ children }) => {
     try {
       setLoading(true);
       const token = await currentUser.getIdToken();
-      await axios.delete(`http://localhost:5000/api/job-applications/${applicationId}`, {
+      await axios.delete(`https://career-connect-backend-chi.vercel.app/api/job-applications/${applicationId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

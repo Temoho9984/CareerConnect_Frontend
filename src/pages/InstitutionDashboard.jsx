@@ -36,7 +36,7 @@ const InstitutionDashboard = () => {
     setLoading(true);
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/applications/institution', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/applications/institution', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setApplications(response.data);
@@ -72,7 +72,7 @@ const InstitutionDashboard = () => {
   // Fetch institution's courses
   const fetchCourses = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/courses/institution/${currentUser.uid}`);
+      const response = await axios.get(`https://career-connect-backend-chi.vercel.app/api/courses/institution/${currentUser.uid}`);
       setCourses(response.data);
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -88,7 +88,7 @@ const InstitutionDashboard = () => {
   const fetchFaculties = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get(`http://localhost:5000/api/institutions/faculties`, {
+      const response = await axios.get(`https://career-connect-backend-chi.vercel.app/api/institutions/faculties`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFaculties(response.data);
@@ -116,7 +116,7 @@ const InstitutionDashboard = () => {
     
     try {
       const token = await currentUser.getIdToken();
-      await axios.put(`http://localhost:5000/api/applications/${applicationId}/status`, 
+      await axios.put(`https://career-connect-backend-chi.vercel.app/api/applications/${applicationId}/status`, 
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -143,7 +143,7 @@ const InstitutionDashboard = () => {
         isActive: true
       };
 
-      await axios.post('http://localhost:5000/api/institutions/courses', courseData, {
+      await axios.post('https://career-connect-backend-chi.vercel.app/api/institutions/courses', courseData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -164,7 +164,7 @@ const InstitutionDashboard = () => {
     
     try {
       const token = await currentUser.getIdToken();
-      await axios.post('http://localhost:5000/api/institutions/faculties', facultyForm, {
+      await axios.post('https://career-connect-backend-chi.vercel.app/api/institutions/faculties', facultyForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

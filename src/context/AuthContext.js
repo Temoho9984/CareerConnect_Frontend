@@ -63,7 +63,7 @@ const register = async (email, password, userData) => {
     console.log('📤 Sending to backend:', backendUserData);
 
     // Step 4: Call backend to create Firestore document ONLY
-    const backendResponse = await axios.post('http://localhost:5000/api/auth/register', backendUserData);
+    const backendResponse = await axios.post('https://career-connect-backend-chi.vercel.app/api/auth/register', backendUserData);
     
     console.log('✅ Backend registration successful:', backendResponse.data);
 
@@ -109,7 +109,7 @@ const register = async (email, password, userData) => {
   const fetchUserProfile = async (user) => {
     try {
       const token = await user.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/auth/profile', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/auth/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserData(response.data);

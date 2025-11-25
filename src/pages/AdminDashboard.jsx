@@ -38,7 +38,7 @@ const AdminDashboard = () => {
   const fetchStats = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/admin/stats', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/admin/stats', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(response.data.stats);
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
   const fetchInstitutions = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/admin/institutions', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/admin/institutions', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setInstitutions(response.data);
@@ -63,7 +63,7 @@ const AdminDashboard = () => {
   const fetchCompanies = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/admin/companies', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/admin/companies', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCompanies(response.data);
@@ -75,7 +75,7 @@ const AdminDashboard = () => {
   const fetchCourses = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/admin/courses', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/admin/courses', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCourses(response.data);
@@ -87,7 +87,7 @@ const AdminDashboard = () => {
   const fetchReports = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/admin/reports', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/admin/reports', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setReports(response.data);
@@ -109,7 +109,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     try {
       const token = await currentUser.getIdToken();
-      await axios.post('http://localhost:5000/api/admin/institutions', newInstitution, {
+      await axios.post('https://career-connect-backend-chi.vercel.app/api/admin/institutions', newInstitution, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     try {
       const token = await currentUser.getIdToken();
-      await axios.post('http://localhost:5000/api/admin/courses', {
+      await axios.post('https://career-connect-backend-chi.vercel.app/api/admin/courses', {
         ...newCourse,
         requirements: newCourse.requirements.split(',').map(req => req.trim())
       }, {
@@ -161,7 +161,7 @@ const AdminDashboard = () => {
   const handleUpdateStatus = async (type, id, status) => {
     try {
       const token = await currentUser.getIdToken();
-      await axios.put(`http://localhost:5000/api/admin/${type}/${id}/status`, 
+      await axios.put(`https://career-connect-backend-chi.vercel.app/api/admin/${type}/${id}/status`, 
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -179,7 +179,7 @@ const AdminDashboard = () => {
     
     try {
       const token = await currentUser.getIdToken();
-      await axios.delete(`http://localhost:5000/api/admin/${type}/${id}`, {
+      await axios.delete(`https://career-connect-backend-chi.vercel.app/api/admin/${type}/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

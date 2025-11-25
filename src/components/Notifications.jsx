@@ -12,7 +12,7 @@ const Notifications = () => {
   const fetchNotifications = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/notifications', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(response.data);
@@ -24,7 +24,7 @@ const Notifications = () => {
   const fetchUnreadCount = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const response = await axios.get('http://localhost:5000/api/notifications/unread-count', {
+      const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/notifications/unread-count', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUnreadCount(response.data.count);
@@ -36,7 +36,7 @@ const Notifications = () => {
   const markAsRead = async (notificationId) => {
     try {
       const token = await currentUser.getIdToken();
-      await axios.put(`http://localhost:5000/api/notifications/${notificationId}/read`, {}, {
+      await axios.put(`https://career-connect-backend-chi.vercel.app/api/notifications/${notificationId}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -53,7 +53,7 @@ const Notifications = () => {
   const markAllAsRead = async () => {
     try {
       const token = await currentUser.getIdToken();
-      await axios.put('http://localhost:5000/api/notifications/mark-all-read', {}, {
+      await axios.put('https://career-connect-backend-chi.vercel.app/api/notifications/mark-all-read', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

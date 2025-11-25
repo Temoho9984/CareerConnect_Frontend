@@ -23,7 +23,7 @@ const FileUpload = ({ onUploadSuccess, type = 'transcript', accept = '.pdf,.jpg,
       const token = await currentUser.getIdToken();
       const endpoint = type === 'transcript' ? '/uploads/transcript' : '/uploads/certificate';
       
-      const response = await axios.post(`http://localhost:5000/api${endpoint}`, formData, {
+      const response = await axios.post(`https://career-connect-backend-chi.vercel.app/api${endpoint}`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
