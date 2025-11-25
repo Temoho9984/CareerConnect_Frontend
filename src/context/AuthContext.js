@@ -154,6 +154,21 @@ const register = async (email, password, userData) => {
     }
   };
 
+  const refreshUserData = async () => {
+  if (!currentUser) return;
+  
+  try {
+    const token = await currentUser.getIdToken();
+    const response = await axios.get(`${API_BASE_URL}/api/auth/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setUserData(response.data);
+    console.log('✅ User data refreshed');
+  } catch (error) {
+    console.error('Error refreshing user data:', error);
+  }
+};
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
@@ -179,6 +194,7 @@ const register = async (email, password, userData) => {
     login,
     logout,
     refreshUser,
+    refreshUserData,
     fetchUserProfile
   };
 

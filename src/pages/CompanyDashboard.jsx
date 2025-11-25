@@ -5,11 +5,12 @@ import axios from 'axios';
 import '../styles/App.css';
 
 const CompanyDashboard = () => {
-  const { currentUser, userData } = useAuth();
+  const { currentUser, userData, refreshUserData } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [applicants, setApplicants] = useState([]);
   const [activeTab, setActiveTab] = useState('jobs');
   const [showJobForm, setShowJobForm] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [loading, setLoading] = useState(false);
   
@@ -23,6 +24,31 @@ const CompanyDashboard = () => {
     jobType: 'full-time',
     deadline: ''
   });
+
+  const [profileForm, setProfileForm] = useState({
+    companyName: '',
+    phone: '',
+    description: '',
+    website: '',
+    industry: '',
+    size: '',
+    location: ''
+  });
+
+  // Initialize profile form with user data
+  useEffect(() => {
+    if (userData) {
+      setProfileForm({
+        companyName: userData.companyName || userData.displayName || '',
+        phone: userData.phone || '',
+        description: userData.description || '',
+        website: userData.website || '',
+        industry: userData.industry || '',
+        size: userData.size || '',
+        location: userData.location || ''
+      });
+    }
+  }, [userData]);
 
   // Fetch company's jobs
   const fetchJobs = useCallback(async () => {
@@ -150,6 +176,45 @@ const CompanyDashboard = () => {
     }
   };
 
+  // Update company profile
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    try {
+      const token = await currentUser.getIdToken();
+      console.log('Updating profile with data:', profileForm);
+      
+      const response = await axios.put(
+        'https://career-connect-backend-chi.vercel.app/api/companies/profile', 
+        profileForm, 
+        {
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}` 
+          }
+        }
+      );
+
+      console.log('Profile update response:', response.data);
+      alert('Profile updated successfully!');
+      setShowProfileForm(false);
+      
+      // Refresh user data
+      if (refreshUserData) {
+        refreshUserData();
+      } else {
+        // Fallback: refetch jobs to trigger re-render
+        fetchJobs();
+      }
+      
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      console.error('Error response:', error.response?.data);
+      alert('Error updating profile: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
   // Contact applicant
   const contactApplicant = async (applicant) => {
     const emailSubject = `Interview Opportunity - ${jobs.find(j => j.id === selectedJob)?.title}`;
@@ -174,6 +239,78 @@ const CompanyDashboard = () => {
     } catch (error) {
       console.error('Error closing job:', error);
       alert('Error closing job: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  // Add this helper function at the top of your CompanyDashboard component
+  const formatFirestoreDate = (dateValue) => {
+    console.log('=== DATE DEBUG START ===');
+    console.log('Raw dateValue:', dateValue);
+    console.log('Type of dateValue:', typeof dateValue);
+    
+    if (!dateValue) {
+      console.log('No date value provided');
+      return 'N/A';
+    }
+
+    // If it's already a valid string date, return it
+    if (typeof dateValue === 'string' && !isNaN(new Date(dateValue).getTime())) {
+      console.log('Already a valid date string');
+      return new Date(dateValue).toLocaleDateString();
+    }
+
+    let date;
+
+    try {
+      // Case 1: Firestore timestamp with seconds
+      if (dateValue.seconds !== undefined) {
+        console.log('Using seconds:', dateValue.seconds);
+        date = new Date(dateValue.seconds * 1000);
+      }
+      // Case 2: Firestore timestamp with _seconds
+      else if (dateValue._seconds !== undefined) {
+        console.log('Using _seconds:', dateValue._seconds);
+        date = new Date(dateValue._seconds * 1000);
+      }
+      // Case 3: It's a Date object
+      else if (dateValue instanceof Date) {
+        console.log('Already a Date object');
+        date = dateValue;
+      }
+      // Case 4: It's an ISO string
+      else if (typeof dateValue === 'string') {
+        console.log('Parsing as string');
+        date = new Date(dateValue);
+      }
+      // Case 5: Try direct conversion
+      else {
+        console.log('Trying direct conversion');
+        date = new Date(dateValue);
+      }
+
+      console.log('Resulting date:', date);
+      console.log('Is valid:', !isNaN(date.getTime()));
+
+      if (isNaN(date.getTime())) {
+        console.log('Invalid date created');
+        return 'Date not available';
+      }
+
+      const formatted = date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      console.log('Formatted date:', formatted);
+      console.log('=== DATE DEBUG END ===');
+      
+      return formatted;
+
+    } catch (error) {
+      console.error('Date parsing error:', error);
+      console.log('=== DATE DEBUG END ===');
+      return 'Date error';
     }
   };
 
@@ -341,7 +478,7 @@ const CompanyDashboard = () => {
                       <p><strong>Salary:</strong> {job.salaryRange}</p>
                       <p><strong>Type:</strong> {job.jobType}</p>
                       <p><strong>Deadline:</strong> {new Date(job.deadline).toLocaleDateString()}</p>
-                      <p><strong>Posted:</strong> {new Date(job.postedAt).toLocaleDateString()}</p>
+                      <p><strong>Posted:</strong> {formatFirestoreDate(job.postedAt)}</p>
                       
                       <div className="job-actions">
                         <button 
@@ -437,19 +574,131 @@ const CompanyDashboard = () => {
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <div className="profile-section">
-              <h2>Company Profile</h2>
-              <div className="profile-info">
-                <p><strong>Company Name:</strong> {userData?.companyName || userData?.displayName}</p>
-                <p><strong>Email:</strong> {userData?.email}</p>
-                <p><strong>Phone:</strong> {userData?.phone || 'Not provided'}</p>
-                <p><strong>Member since:</strong> {new Date(userData?.createdAt).toLocaleDateString()}</p>
-                <p><strong>Status:</strong> 
-                  <span className={`status status-${userData?.isVerified ? 'active' : 'pending'}`}>
-                    {userData?.isVerified ? 'Verified' : 'Pending Verification'}
-                  </span>
-                </p>
+              <div className="section-header">
+                <h2>Company Profile</h2>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => setShowProfileForm(true)}
+                >
+                  Edit Profile
+                </button>
               </div>
-              <button className="btn btn-primary">Edit Profile</button>
+
+              {showProfileForm && (
+                <div className="form-modal">
+                  <div className="modal-content">
+                    <h3>Edit Company Profile</h3>
+                    <form onSubmit={handleProfileUpdate}>
+                      <div className="form-group">
+                        <label>Company Name *</label>
+                        <input
+                          type="text"
+                          value={profileForm.companyName}
+                          onChange={(e) => setProfileForm({...profileForm, companyName: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Phone</label>
+                        <input
+                          type="text"
+                          value={profileForm.phone}
+                          onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Description</label>
+                        <textarea
+                          value={profileForm.description}
+                          onChange={(e) => setProfileForm({...profileForm, description: e.target.value})}
+                          rows="4"
+                          placeholder="Describe your company..."
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Website</label>
+                        <input
+                          type="url"
+                          value={profileForm.website}
+                          onChange={(e) => setProfileForm({...profileForm, website: e.target.value})}
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Industry</label>
+                        <input
+                          type="text"
+                          value={profileForm.industry}
+                          onChange={(e) => setProfileForm({...profileForm, industry: e.target.value})}
+                          placeholder="e.g., Technology, Healthcare, Finance"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Company Size</label>
+                        <select
+                          value={profileForm.size}
+                          onChange={(e) => setProfileForm({...profileForm, size: e.target.value})}
+                        >
+                          <option value="">Select Size</option>
+                          <option value="1-10">1-10 employees</option>
+                          <option value="11-50">11-50 employees</option>
+                          <option value="51-200">51-200 employees</option>
+                          <option value="201-500">201-500 employees</option>
+                          <option value="501-1000">501-1000 employees</option>
+                          <option value="1000+">1000+ employees</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Location</label>
+                        <input
+                          type="text"
+                          value={profileForm.location}
+                          onChange={(e) => setProfileForm({...profileForm, location: e.target.value})}
+                          placeholder="e.g., Maseru, Lesotho"
+                        />
+                      </div>
+                      <div className="form-actions">
+                        <button type="submit" className="btn btn-primary">Update Profile</button>
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary"
+                          onClick={() => setShowProfileForm(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              <div className="profile-info">
+                <div className="info-card">
+                  <h4>Basic Information</h4>
+                  <p><strong>Company Name:</strong> {userData?.companyName || userData?.displayName}</p>
+                  <p><strong>Email:</strong> {userData?.email}</p>
+                  <p><strong>Phone:</strong> {userData?.phone || 'Not provided'}</p>
+                  <p><strong>Member since:</strong> {formatFirestoreDate(userData?.createdAt)}</p>
+                  <p><strong>Status:</strong> 
+                    <span className={`status status-${userData?.isVerified ? 'active' : 'pending'}`}>
+                      {userData?.isVerified ? 'Verified' : 'Pending Verification'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="info-card">
+                  <h4>Company Details</h4>
+                  <p><strong>Description:</strong> {userData?.description || 'Not provided'}</p>
+                  <p><strong>Website:</strong> {userData?.website ? (
+                    <a href={userData.website} target="_blank" rel="noopener noreferrer">
+                      {userData.website}
+                    </a>
+                  ) : 'Not provided'}</p>
+                  <p><strong>Industry:</strong> {userData?.industry || 'Not specified'}</p>
+                  <p><strong>Company Size:</strong> {userData?.size || 'Not specified'}</p>
+                  <p><strong>Location:</strong> {userData?.location || 'Not specified'}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>

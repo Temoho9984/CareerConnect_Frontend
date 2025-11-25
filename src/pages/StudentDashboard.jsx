@@ -157,6 +157,58 @@ const StudentDashboard = () => {
     }
   };
 
+const formatFirestoreDate = (dateValue) => {
+  if (!dateValue) return 'N/A';
+  
+  console.log('Raw date value:', dateValue);
+  console.log('Type of date value:', typeof dateValue);
+  
+  let date;
+  
+  try {
+    // Case 1: It's already a valid Date object or ISO string
+    if (dateValue instanceof Date && !isNaN(dateValue)) {
+      date = dateValue;
+    }
+    // Case 2: Firestore timestamp object with seconds
+    else if (dateValue.seconds !== undefined) {
+      date = new Date(dateValue.seconds * 1000);
+    }
+    // Case 3: Firestore timestamp object with _seconds (alternative format)
+    else if (dateValue._seconds !== undefined) {
+      date = new Date(dateValue._seconds * 1000);
+    }
+    // Case 4: It's an ISO string from your backend
+    else if (typeof dateValue === 'string' && dateValue.includes('T')) {
+      date = new Date(dateValue);
+    }
+    // Case 5: It might be a number (timestamp)
+    else if (typeof dateValue === 'number') {
+      date = new Date(dateValue);
+    }
+    // Case 6: Try to parse it as a date anyway
+    else {
+      date = new Date(dateValue);
+    }
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.log('Invalid date created from:', dateValue);
+      return 'Date not available';
+    }
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+    
+  } catch (error) {
+    console.error('Error formatting date:', error, 'Value:', dateValue);
+    return 'Date error';
+  }
+};
+
   return (
     <ProtectedRoute allowedRoles={['student']}>
       <div className="dashboard">
@@ -350,94 +402,103 @@ const StudentDashboard = () => {
               
               {!loading && !error && courseApplications.length > 0 && (
                 <div className="applications-list">
-                  {courseApplications.map(app => (
-                    <div key={app.id} className="application-card">
-                      <h3>{app.course?.name || 'Unknown Course'}</h3>
-                      <p><strong>Institution:</strong> {app.institution?.displayName || app.institution?.institutionName || 'Unknown Institution'}</p>
-                      <p><strong>Status:</strong> 
-                        <span 
-                          className="status" 
-                          style={{ 
-                            backgroundColor: getStatusColor(app.status),
-                            color: 'white',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            marginLeft: '8px'
-                          }}
-                        >
-                          {app.status.toUpperCase()}
-                        </span>
-                      </p>
-                      <p><strong>Applied:</strong> {app.appliedAt ? new Date(app.appliedAt.seconds * 1000).toLocaleDateString() : 'N/A'}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* JOB APPLICATIONS TAB */}
-          {activeTab === 'job-applications' && (
-            <div className="applications-section">
-              <h2>My Job Applications</h2>
-              
-              {jobsLoading ? (
-                <p>Loading job applications...</p>
-              ) : jobsError ? (
-                <div className="error-message">
-                  {jobsError}
-                  <button onClick={fetchMyApplications} className="btn btn-secondary">
-                    Retry
-                  </button>
-                </div>
-              ) : jobApplications.length === 0 ? (
-                <p>No job applications submitted yet. Browse jobs and apply!</p>
-              ) : (
-                <div className="applications-list">
-                  {jobApplications.map(application => (
-                    <div key={application.id} className="application-card">
-                      <div className="application-header">
-                        <h3>{application.job?.title || 'Job Not Found'}</h3>
-                        <span 
-                          className="status-badge"
-                          style={{ 
-                            backgroundColor: getStatusColor(application.status),
-                            color: 'white',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          {application.status.toUpperCase()}
-                        </span>
+                  {courseApplications.map(app => {
+                    console.log('Course app date:', app.appliedAt); // Debug log
+                    return (
+                      <div key={app.id} className="application-card">
+                        <h3>{app.course?.name || 'Unknown Course'}</h3>
+                        <p><strong>Institution:</strong> {app.institution?.displayName || app.institution?.institutionName || 'Unknown Institution'}</p>
+                        <p><strong>Status:</strong> 
+                          <span 
+                            className="status" 
+                            style={{ 
+                              backgroundColor: getStatusColor(app.status),
+                              color: 'white',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              marginLeft: '8px'
+                            }}
+                          >
+                            {app.status.toUpperCase()}
+                          </span>
+                        </p>
+                        {/* USING HELPER FUNCTION HERE TOO */}
+                        <p><strong>Applied:</strong> {formatFirestoreDate(app.appliedAt)}</p>
                       </div>
-                      
-                      <p><strong>Company:</strong> {application.company?.displayName || 'Unknown Company'}</p>
-                      <p><strong>Applied:</strong> {new Date(application.appliedAt).toLocaleDateString()}</p>
-                      
-                      {application.coverLetter && (
-                        <div className="cover-letter">
-                          <strong>Cover Letter:</strong>
-                          <p>{application.coverLetter}</p>
-                        </div>
-                      )}
-
-                      {application.status === 'pending' && (
-                        <button 
-                          onClick={() => handleWithdrawJobApplication(application.id)}
-                          className="btn btn-danger withdraw-btn"
-                        >
-                          Withdraw Application
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
+
+{/* JOB APPLICATIONS TAB */}
+{activeTab === 'job-applications' && (
+  <div className="applications-section">
+    <h2>My Job Applications</h2>
+    
+    {jobsLoading ? (
+      <p>Loading job applications...</p>
+    ) : jobsError ? (
+      <div className="error-message">
+        {jobsError}
+        <button onClick={fetchMyApplications} className="btn btn-secondary">
+          Retry
+        </button>
+      </div>
+    ) : jobApplications.length === 0 ? (
+      <p>No job applications submitted yet. Browse jobs and apply!</p>
+    ) : (
+      <div className="applications-list">
+        {jobApplications.map(application => {
+          console.log('Application data:', application); // Debug log
+          return (
+            <div key={application.id} className="application-card">
+              <div className="application-header">
+                <h3>{application.job?.title || 'Job Not Found'}</h3>
+                <span 
+                  className="status-badge"
+                  style={{ 
+                    backgroundColor: getStatusColor(application.status),
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {application.status.toUpperCase()}
+                </span>
+              </div>
+              
+              <p><strong>Company:</strong> {application.company?.displayName || 'Unknown Company'}</p>
+              
+              {/* USING HELPER FUNCTION */}
+              <p><strong>Applied:</strong> {formatFirestoreDate(application.appliedAt)}</p>
+              
+              {application.coverLetter && (
+                <div className="cover-letter">
+                  <strong>Cover Letter:</strong>
+                  <p>{application.coverLetter}</p>
+                </div>
+              )}
+
+              {application.status === 'pending' && (
+                <button 
+                  onClick={() => handleWithdrawJobApplication(application.id)}
+                  className="btn btn-danger withdraw-btn"
+                >
+                  Withdraw Application
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+)}
         </div>
       </div>
     </ProtectedRoute>
