@@ -5,7 +5,7 @@ import axios from 'axios';
 import '../styles/App.css';
 
 const InstitutionDashboard = () => {
-  const { currentUser, userData } = useAuth();
+  const { currentUser, userData, refreshUserData } = useAuth();
   const [applications, setApplications] = useState([]);
   const [courses, setCourses] = useState([]);
   const [faculties, setFaculties] = useState([]);
@@ -13,6 +13,7 @@ const InstitutionDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [showAddCourse, setShowAddCourse] = useState(false);
   const [showAddFaculty, setShowAddFaculty] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
   
   // Form states
   const [courseForm, setCourseForm] = useState({
@@ -28,6 +29,49 @@ const InstitutionDashboard = () => {
     name: '',
     description: ''
   });
+
+  const [profileForm, setProfileForm] = useState({
+    institutionName: '',
+    phone: '',
+    description: '',
+    website: '',
+    address: '',
+    establishedYear: ''
+  });
+
+  // Initialize profile form with user data
+  useEffect(() => {
+    if (userData) {
+      setProfileForm({
+        institutionName: userData.institutionName || userData.displayName || '',
+        phone: userData.phone || '',
+        description: userData.description || '',
+        website: userData.website || '',
+        address: userData.address || '',
+        establishedYear: userData.establishedYear || ''
+      });
+    }
+  }, [userData]);
+
+  // Date formatting helper
+  const formatFirestoreDate = (dateValue) => {
+    if (!dateValue) return 'N/A';
+    
+    if (dateValue.seconds !== undefined) {
+      return new Date(dateValue.seconds * 1000).toLocaleDateString();
+    }
+    
+    if (typeof dateValue.toDate === 'function') {
+      return dateValue.toDate().toLocaleDateString();
+    }
+    
+    try {
+      return new Date(dateValue).toLocaleDateString();
+    } catch (error) {
+      console.error('Date parsing error:', error);
+      return 'Invalid Date';
+    }
+  };
 
   // Fetch applications for this institution
   const fetchApplications = useCallback(async () => {
@@ -178,6 +222,40 @@ const InstitutionDashboard = () => {
     }
   };
 
+  // Update institution profile
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    try {
+      const token = await currentUser.getIdToken();
+      const response = await axios.put(
+        'https://career-connect-backend-chi.vercel.app/api/institutions/profile', 
+        profileForm, 
+        {
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}` 
+          }
+        }
+      );
+
+      console.log('Profile update response:', response.data);
+      alert('Profile updated successfully!');
+      setShowProfileForm(false);
+      
+      // Refresh user data
+      if (refreshUserData) {
+        refreshUserData();
+      }
+      
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      console.error('Error response:', error.response?.data);
+      alert('Error updating profile: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
   return (
     <ProtectedRoute allowedRoles={['institution']}>
       <div className="dashboard">
@@ -231,7 +309,8 @@ const InstitutionDashboard = () => {
                         <h3>{app.course?.name || 'Unknown Course'}</h3>
                         <p><strong>Student:</strong> {app.student?.displayName}</p>
                         <p><strong>Email:</strong> {app.student?.email}</p>
-                        <p><strong>Applied:</strong> {new Date(app.appliedAt).toLocaleDateString()}</p>
+                        {/* FIXED DATE DISPLAY */}
+                        <p><strong>Applied:</strong> {formatFirestoreDate(app.appliedAt)}</p>
                         <p><strong>Status:</strong> 
                           <span className={`status status-${app.status}`}>
                             {app.status}
@@ -464,19 +543,117 @@ const InstitutionDashboard = () => {
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <div className="profile-section">
-              <h2>Institution Profile</h2>
-              <div className="profile-info">
-                <p><strong>Institution Name:</strong> {userData?.institutionName || userData?.displayName}</p>
-                <p><strong>Email:</strong> {userData?.email}</p>
-                <p><strong>Phone:</strong> {userData?.phone || 'Not provided'}</p>
-                <p><strong>Member since:</strong> {new Date(userData?.createdAt).toLocaleDateString()}</p>
-                <p><strong>Status:</strong> 
-                  <span className={`status status-${userData?.isVerified ? 'active' : 'pending'}`}>
-                    {userData?.isVerified ? 'Verified' : 'Pending Verification'}
-                  </span>
-                </p>
+              <div className="section-header">
+                <h2>Institution Profile</h2>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => setShowProfileForm(true)}
+                >
+                  Edit Profile
+                </button>
               </div>
-              <button className="btn btn-primary">Edit Profile</button>
+
+              {showProfileForm && (
+                <div className="form-modal">
+                  <div className="modal-content">
+                    <h3>Edit Institution Profile</h3>
+                    <form onSubmit={handleProfileUpdate}>
+                      <div className="form-group">
+                        <label>Institution Name *</label>
+                        <input
+                          type="text"
+                          value={profileForm.institutionName}
+                          onChange={(e) => setProfileForm({...profileForm, institutionName: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Phone</label>
+                        <input
+                          type="text"
+                          value={profileForm.phone}
+                          onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Description</label>
+                        <textarea
+                          value={profileForm.description}
+                          onChange={(e) => setProfileForm({...profileForm, description: e.target.value})}
+                          rows="4"
+                          placeholder="Describe your institution..."
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Website</label>
+                        <input
+                          type="url"
+                          value={profileForm.website}
+                          onChange={(e) => setProfileForm({...profileForm, website: e.target.value})}
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Address</label>
+                        <textarea
+                          value={profileForm.address}
+                          onChange={(e) => setProfileForm({...profileForm, address: e.target.value})}
+                          placeholder="Full physical address"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Established Year</label>
+                        <input
+                          type="number"
+                          value={profileForm.establishedYear}
+                          onChange={(e) => setProfileForm({...profileForm, establishedYear: e.target.value})}
+                          placeholder="e.g., 1990"
+                          min="1800"
+                          max="2024"
+                        />
+                      </div>
+                      <div className="form-actions">
+                        <button type="submit" className="btn btn-primary">Update Profile</button>
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary"
+                          onClick={() => setShowProfileForm(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              <div className="profile-info">
+                <div className="info-card">
+                  <h4>Basic Information</h4>
+                  <p><strong>Institution Name:</strong> {userData?.institutionName || userData?.displayName}</p>
+                  <p><strong>Email:</strong> {userData?.email}</p>
+                  <p><strong>Phone:</strong> {userData?.phone || 'Not provided'}</p>
+                  {/* FIXED DATE DISPLAY */}
+                  <p><strong>Member since:</strong> {formatFirestoreDate(userData?.createdAt)}</p>
+                  <p><strong>Status:</strong> 
+                    <span className={`status status-${userData?.isVerified ? 'active' : 'pending'}`}>
+                      {userData?.isVerified ? 'Verified' : 'Pending Verification'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="info-card">
+                  <h4>Institution Details</h4>
+                  <p><strong>Description:</strong> {userData?.description || 'Not provided'}</p>
+                  <p><strong>Website:</strong> {userData?.website ? (
+                    <a href={userData.website} target="_blank" rel="noopener noreferrer">
+                      {userData.website}
+                    </a>
+                  ) : 'Not provided'}</p>
+                  <p><strong>Address:</strong> {userData?.address || 'Not provided'}</p>
+                  <p><strong>Established:</strong> {userData?.establishedYear || 'Not specified'}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
