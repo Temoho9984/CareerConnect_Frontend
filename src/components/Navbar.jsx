@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
 import '../styles/App.css';
 import Notifications from './Notifications';
 
 const Navbar = () => {
   const { currentUser, userData, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -20,11 +23,19 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="nav-container">
+        <button 
+          className="hamburger" 
+          style={{marginRight:'10px'}}
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <span></span><span></span><span></span>
+        </button>
         <Link to="/" className="nav-logo">
           CareerConnect
         </Link>
-        
-        <div className="nav-menu">
+
+
+        <div className={`nav-menu ${menuOpen ? "open" : ""}`}>
           <Link to="/" className="nav-link">Home</Link>
           
           {currentUser ? (
@@ -45,9 +56,6 @@ const Navbar = () => {
               {userData?.userType === 'admin' && (
                 <Link to="/admin" className="nav-link">Admin</Link>
               )}
-
-              
-              
 
               <button onClick={handleLogout} className="nav-button">
                 Logout
