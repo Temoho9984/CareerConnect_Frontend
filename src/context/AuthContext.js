@@ -154,12 +154,12 @@ const register = async (email, password, userData) => {
     }
   };
 
-  const refreshUserData = async () => {
+const refreshUserData = async () => {
   if (!currentUser) return;
   
   try {
     const token = await currentUser.getIdToken();
-    const response = await axios.get(`${API_BASE_URL}/api/auth/profile`, {
+    const response = await axios.get('https://career-connect-backend-chi.vercel.app/api/auth/profile', {
       headers: { Authorization: `Bearer ${token}` }
     });
     setUserData(response.data);
